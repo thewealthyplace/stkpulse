@@ -1,0 +1,72 @@
+/* Widget responsive styles */
+
+.stkpulse-widget {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.stkpulse-widget * {
+  box-sizing: border-box;
+}
+
+/* Responsive container */
+@media (max-width: 768px) {
+  .stkpulse-widget {
+    width: 100% !important;
+    min-width: 280px;
+  }
+}
+
+/* Dark theme */
+.stkpulse-widget[data-theme="dark"] {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+/* Light theme */
+.stkpulse-widget[data-theme="light"] {
+  background-color: #ffffff;
+  color: #333333;
+}
+
+/* Loading state */
+.stkpulse-widget-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+/* Error state */
+.stkpulse-widget-error {
+  padding: 20px;
+  text-align: center;
+  color: #ff6b6b;
+}
+
+/* Chart container */
+.stkpulse-widget-chart {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Legend */
+.stkpulse-widget-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+/* Grid lines */
+.stkpulse-widget-grid line {
+  stroke: currentColor;
+  opacity: 0.1;
+}
+
+/* No tracking, no cookies */
+.stkpulse-widget {
+  /* Privacy-first: no external resources, no tracking */
+}

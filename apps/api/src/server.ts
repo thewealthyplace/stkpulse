@@ -5,6 +5,7 @@ import cors from "@fastify/cors";
 import { Pool } from "pg";
 import { portfolioRoutes } from "./routes/portfolio";
 import { alertRoutes } from "./routes/alerts";
+import { widgetRoutes } from "./routes/widgets";
 import { AlertOrchestrator } from "./services/alertOrchestrator";
 import { AlertHistoryCleanup } from "./services/alertHistoryCleanup";
 
@@ -32,6 +33,7 @@ async function build() {
     db, 
     sseService: alertOrchestrator.getSSEService() 
   });
+  await fastify.register(widgetRoutes, { prefix: "/api/v1", db });
 
   return fastify;
 }
