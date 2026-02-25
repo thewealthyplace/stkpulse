@@ -6,6 +6,9 @@ import { AlertEngine } from "./alertEngine";
 import { WebhookService } from "./webhookService";
 import { EmailService } from "./emailService";
 import { SSEService } from "./sseService";
+import { PriceMonitor } from "./priceMonitor";
+import { StackingCycleMonitor } from "./stackingCycleMonitor";
+import { NFTSaleMonitor } from "./nftSaleMonitor";
 
 export class AlertOrchestrator {
   private wsClient: HiroWebSocketClient;
@@ -13,6 +16,9 @@ export class AlertOrchestrator {
   private webhookService: WebhookService;
   private emailService: EmailService;
   private sseService: SSEService;
+  private priceMonitor: PriceMonitor;
+  private stackingMonitor: StackingCycleMonitor;
+  private nftMonitor: NFTSaleMonitor;
   private retryInterval: NodeJS.Timeout | null = null;
 
   constructor(private db: Pool, wsUrl: string) {
@@ -21,6 +27,9 @@ export class AlertOrchestrator {
     this.webhookService = new WebhookService(db);
     this.emailService = new EmailService(db);
     this.sseService = new SSEService();
+    this.priceMonitor = new PriceMonitor(db);
+    this.stackingMonitor = new StackingCycleMonitor(db);
+    this.nftMonitor = new NFTSaleMonitor(db);
 
     this.setupEventHandlers();
   }
@@ -30,6 +39,35 @@ export class AlertOrchestrator {
       const triggeredAlerts = await this.alertEngine.evaluateTransaction(tx);
 
       for (const alertEvent of triggeredAlerts) {
+        await this.deliverAlert(alertEvent);
+      }
+
+      // Check NFT sales
+      const nftAlerts = await this.nftMonitor.evaluateNFTSale(tx);
+      for (const alertEvent of nftAlerts) {
+        await this.deliverAlert(alertEvent);
+      }
+    });
+
+    // Price threshold alerts
+    this.priceMonitor.on("price_change", async (priceUpdate) => {
+      const priceAlerts = await this.priceMonitor.evaluatePriceAlerts(priceUpdate);
+      for (const alertEvent of priceAlerts) {
+        await this.deliverAlert(alertEvent);
+      }
+    });
+
+    // Stacking cycle alerts
+    this.stackingMonitor.on("cycle_start", async (event) => {
+      const alerts = await this.stackingMonitor.evaluateStackingAlerts(event);
+      for (const alertEvent of alerts) {
+        await this.deliverAlert(alertEvent);
+      }
+    });
+
+    this.stackingMonitor.on("cycle_end", async (event) => {
+      const alerts = await this.stackingMonitor.evaluateStackingAlerts(event);
+      for (const alertEvent of alerts) {
         await this.deliverAlert(alertEvent);
       }
     });
@@ -78,6 +116,8 @@ export class AlertOrchestrator {
   start() {
     console.log("[Orchestrator] Starting alert system");
     this.wsClient.connect();
+    this.priceMonitor.start();
+    this.stackingMonitor.start();
 
     // Start webhook retry processor (every 30 seconds)
     this.retryInterval = setInterval(() => {
@@ -88,6 +128,8 @@ export class AlertOrchestrator {
   stop() {
     console.log("[Orchestrator] Stopping alert system");
     this.wsClient.disconnect();
+    this.priceMonitor.stop();
+    this.stackingMonitor.stop();
     if (this.retryInterval) {
       clearInterval(this.retryInterval);
     }
