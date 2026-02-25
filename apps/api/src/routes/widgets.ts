@@ -3,6 +3,7 @@
 import { FastifyInstance, FastifyPluginOptions } from "fastify";
 import { Pool } from "pg";
 import { WidgetDataService } from "../services/widgetDataService";
+import { WidgetCache } from "../services/widgetCache";
 import { Period } from "@stkpulse/shared/widget-types";
 
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
@@ -30,6 +31,9 @@ export async function widgetRoutes(
 ) {
   const { db } = options;
   const widgetService = new WidgetDataService(db);
+  const cache = new WidgetCache(db);
+  
+  cache.startCleanup();
 
   // Rate limiting hook
   fastify.addHook("preHandler", async (request, reply) => {
@@ -44,12 +48,24 @@ export async function widgetRoutes(
     "/widget/stx-price",
     async (request, reply) => {
       const { period = "30d", currency = "USD" } = request.query;
+      const cacheKey = `stx-price:${period}:${currency}`;
       
+      const cached = await cache.get(cacheKey);
+      if (cached) {
+        reply.header("X-Cache", "HIT");
+        reply.header("Cache-Control", "public, max-age=30");
+        reply.header("Access-Control-Allow-Origin", "*");
+        return cached;
+      }
+      
+      reply.header("X-Cache", "MISS");
       reply.header("Cache-Control", "public, max-age=30");
       reply.header("Access-Control-Allow-Origin", "*");
       
       const data = await widgetService.getSTXPrice(period, currency);
-      return { type: "stx-price", data, timestamp: Date.now(), period };
+      const result = { type: "stx-price", data, timestamp: Date.now(), period };
+      cache.set(cacheKey, result);
+      return result;
     }
   );
 
