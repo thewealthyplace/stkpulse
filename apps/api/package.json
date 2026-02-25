@@ -14,11 +14,15 @@
     "@stkpulse/shared": "workspace:*",
     "fastify": "^4.28.1",
     "node-fetch": "^3.3.2",
-    "pg": "^8.12.0"
+    "nodemailer": "^6.9.7",
+    "pg": "^8.12.0",
+    "ws": "^8.16.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.2",
+    "@types/nodemailer": "^6.4.14",
     "@types/pg": "^8.11.6",
+    "@types/ws": "^8.5.10",
     "tsx": "^4.16.0",
     "typescript": "^5.5.2",
     "vitest": "^1.6.0"
