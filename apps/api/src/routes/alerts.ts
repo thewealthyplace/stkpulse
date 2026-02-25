@@ -3,18 +3,34 @@
 import { FastifyInstance, FastifyPluginOptions } from "fastify";
 import { Pool } from "pg";
 import { CreateAlertRequest, Alert } from "@stkpulse/shared/alert-types";
+import { AlertValidator } from "../services/alertValidator";
+import { AlertRateLimiter } from "../services/rateLimiter";
 
 export async function alertRoutes(
   fastify: FastifyInstance,
   options: FastifyPluginOptions & { db: Pool; sseService: any }
 ) {
   const { db, sseService } = options;
+  const validator = new AlertValidator();
+  const rateLimiter = new AlertRateLimiter(db);
 
   // Create alert
   fastify.post<{ Body: CreateAlertRequest & { user_id: string } }>(
     "/alerts",
     async (request, reply) => {
       const { user_id, name, condition, notify, cooldown_minutes } = request.body;
+
+      // Validate condition
+      const conditionValidation = validator.validateCondition(condition);
+      if (!conditionValidation.valid) {
+        return reply.status(400).send({ errors: conditionValidation.errors });
+      }
+
+      // Validate notification
+      const notifyValidation = validator.validateNotification(notify);
+      if (!notifyValidation.valid) {
+        return reply.status(400).send({ errors: notifyValidation.errors });
+      }
 
       const { rows } = await db.query<Alert>(
         `INSERT INTO alerts (user_id, name, condition_type, condition_config, notify_webhook, notify_email, cooldown_minutes)
