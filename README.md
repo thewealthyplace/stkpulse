@@ -24,6 +24,7 @@ From individual traders to protocol teams, stkpulse provides the data infrastruc
 - **Wallet Portfolio** — track your STX, sBTC, and SIP-010 token holdings with PnL
 - **NFT Market Data** — floor prices, volume, sales history across Stacks marketplaces
 - **Stacking Analytics** — current cycle stats, pool rankings, BTC yield estimates
+- **Real-time Alerts** — WebSocket-powered alerts for on-chain events with webhook, email, and in-app delivery
 - **Custom Alerts** — webhook and email alerts for on-chain events you define
 - **Developer API** — REST and WebSocket API for integrating stkpulse data
 - **Historical Data** — full historical export for any metric in CSV or JSON
@@ -256,6 +257,9 @@ ALERT_WEBHOOK_SECRET=your_secret_here
 - [x] DeFi TVL and volume tracking
 - [x] Stacking cycle analytics
 - [x] REST and WebSocket API
+- [x] WebSocket-powered alert system with 6 alert types
+- [x] Webhook delivery with exponential backoff retry
+- [x] Email and in-app notifications via SSE
 - [ ] NFT floor price aggregator
 - [ ] Wallet PnL tracker
 - [ ] Mobile app (React Native)
